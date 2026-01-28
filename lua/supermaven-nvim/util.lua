@@ -180,10 +180,32 @@ function M.get_last_line(str)
 end
 
 function M.to_next_word(str)
-  local match = str:match("^.-[%a%d_]+")
-  if match ~= nil then
-    return match
+  local i = 1
+  local n = #str
+  while i <= n do
+    local b = str:byte(i)
+
+    if b > 127 then
+      -- Multi-byte character: treat as a single-character word
+      local char_len = 1
+      if b >= 240 then
+        char_len = 4
+      elseif b >= 224 then
+        char_len = 3
+      elseif b >= 192 then
+        char_len = 2
+      end
+
+      return str:sub(1, i + char_len - 1)
+    elseif str:match("^[%a%d_]", i) then
+      -- ASCII Word start: include the whole word
+      local _, word_end = str:find("^[%a%d_]+", i)
+      return str:sub(1, word_end)
+    end
+
+    i = i + 1
   end
+
   return str
 end
 
